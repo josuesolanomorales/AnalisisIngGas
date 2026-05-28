@@ -6322,7 +6322,9 @@
 
         // Google Sheets Integration
         const GOOGLE_SHEET_ID = "1t01Z4szz-pOFPHUFn9eUkhdpi5F1Uy-hhwl97TxKIQg";
-        const GOOGLE_SHEET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=xlsx`;
+        // Using a reliable public CORS proxy to bypass Google Sheets download redirection CORS policy
+        const TARGET_URL = encodeURIComponent(`https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=xlsx`);
+        const GOOGLE_SHEET_URL = `https://api.allorigins.win/raw?url=${TARGET_URL}`;
 
         // Icons Init
         lucide.createIcons();
@@ -6350,7 +6352,7 @@
                     <div class="welcome-container text-center" style="padding: 4rem 2rem;">
                         <div class="spinner-grow text-primary mb-4" role="status" style="width: 3rem; height: 3rem;"></div>
                         <h2>Conectando con Google Sheets...</h2>
-                        <p class="text-muted">Descargando y procesando la estructura presupuestaria en tiempo real.</p>
+                        <p class="text-muted">Descargando y procesando la estructura presupuestaria en tiempo real de forma segura.</p>
                         <p class="text-xs text-slate-400">ID del documento: <code>${GOOGLE_SHEET_ID}</code></p>
                     </div>
                 `;
@@ -6385,8 +6387,16 @@
                 updateUI();
                 
                 // Navigate to dashboard automatically since data is ready
-                const dashboardTab = document.querySelector('[data-tab="dashboard"]');
-                if (dashboardTab) dashboardTab.click();
+                const dashboardTab = document.querySelector('[data-tab="tab-home"]');
+                if (dashboardTab) {
+                    dashboardTab.click();
+                } else {
+                    // Fallback nav
+                    const welcomeTab = document.getElementById('view-home-welcome');
+                    if (welcomeTab) welcomeTab.classList.add('d-none');
+                    const dbView = document.getElementById('view-dashboard');
+                    if (dbView) dbView.classList.remove('d-none');
+                }
 
             } catch (err) {
                 console.error("Error loading Google Sheets data, falling back", err);
@@ -6403,6 +6413,7 @@
                 updateUI();
             }
         }
+
 
         function checkSessionStorage() {
             const cachedData = sessionStorage.getItem('cgr_budget_data');
