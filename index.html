@@ -6322,9 +6322,6 @@
 
         // Google Sheets Integration
         const GOOGLE_SHEET_ID = "1t01Z4szz-pOFPHUFn9eUkhdpi5F1Uy-hhwl97TxKIQg";
-        // Using a reliable public CORS proxy to bypass Google Sheets download redirection CORS policy
-        const TARGET_URL = encodeURIComponent(`https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=xlsx`);
-        const GOOGLE_SHEET_URL = `https://api.allorigins.win/raw?url=${TARGET_URL}`;
 
         // Icons Init
         lucide.createIcons();
@@ -6337,7 +6334,6 @@
         });
 
         async function loadGoogleSheetsData() {
-            // Update UI status to Loading
             const statusDot = document.getElementById('data-status-dot');
             const statusText = document.getElementById('data-status-text');
             
@@ -6352,20 +6348,37 @@
                     <div class="welcome-container text-center" style="padding: 4rem 2rem;">
                         <div class="spinner-grow text-primary mb-4" role="status" style="width: 3rem; height: 3rem;"></div>
                         <h2>Conectando con Google Sheets...</h2>
-                        <p class="text-muted">Descargando y procesando la estructura presupuestaria en tiempo real de forma segura.</p>
+                        <p class="text-muted">Descargando y procesando la estructura presupuestaria en tiempo real sin proxies.</p>
                         <p class="text-xs text-slate-400">ID del documento: <code>${GOOGLE_SHEET_ID}</code></p>
                     </div>
                 `;
             }
 
             try {
-                const response = await fetch(GOOGLE_SHEET_URL);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
-                const arrayBuffer = await response.arrayBuffer();
-                const data = new Uint8Array(arrayBuffer);
-                const workbook = XLSX.read(data, { type: 'array' });
-                
+                // Fetch all sheets in parallel using the secure /gviz/tq CSV endpoint (Official Google API with native CORS support)
+                const fetchTab = async (sheetName) => {
+                    const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`Error loading tab: ${sheetName}`);
+                    const csvText = await response.text();
+                    return { name: sheetName, text: csvText };
+                };
+
+                const tabs = ['Auxiliar', 'LS_Alertas', 'LS_Menores', 'Alerta Ingresos', 'Alerta Gastos'];
+                const results = await Promise.all(tabs.map(tab => fetchTab(tab).catch(err => {
+                    console.warn(`Tab ${tab} could not be fetched or might not exist:`, err);
+                    return null;
+                })));
+
+                // Create a virtual SheetJS workbook from the loaded CSVs
+                const workbook = XLSX.utils.book_new();
+                results.forEach(res => {
+                    if (res) {
+                        const worksheet = XLSX.read(res.text, { type: 'string', raw: true }).Sheets.Sheet1;
+                        XLSX.utils.book_append_sheet(workbook, worksheet, res.name);
+                    }
+                });
+
                 const parsedData = parseWorkbook(workbook);
                 
                 // Cache in state
@@ -6386,12 +6399,11 @@
                 appState.selectedInstId = parsedData.instituciones[0] ? parsedData.instituciones[0].id : null;
                 updateUI();
                 
-                // Navigate to dashboard automatically since data is ready
+                // Navigate to dashboard automatically
                 const dashboardTab = document.querySelector('[data-tab="tab-home"]');
                 if (dashboardTab) {
                     dashboardTab.click();
                 } else {
-                    // Fallback nav
                     const welcomeTab = document.getElementById('view-home-welcome');
                     if (welcomeTab) welcomeTab.classList.add('d-none');
                     const dbView = document.getElementById('view-dashboard');
@@ -6413,6 +6425,7 @@
                 updateUI();
             }
         }
+
 
 
         function checkSessionStorage() {
