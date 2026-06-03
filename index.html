@@ -7838,6 +7838,14 @@ La institución remitió los respectivos documentos presupuestarios en el plazo 
             setupEventListeners();
         }
 
+        // Helper: parse numbers in Costa Rican locale (e.g. "15.980,70" → 15980.70)
+        function parseNum(val) {
+            if (val === null || val === undefined || val === "") return 0;
+            if (typeof val === 'number') return val;
+            const cleaned = val.toString().replace(/\./g, '').replace(',', '.');
+            return parseFloat(cleaned) || 0;
+        }
+
         // Workbook Parsing using SheetJS
         function parseWorkbook(workbook) {
             const sheetNames = workbook.SheetNames;
@@ -7872,7 +7880,7 @@ La institución remitió los respectivos documentos presupuestarios en el plazo 
                 
                 const name = row[1].toString().trim();
                 const auditor = row[5] ? row[5].toString().trim() : "Sin asignar";
-                const totalBudget = parseFloat(row[6]) || 0;
+                const totalBudget = parseNum(row[6]);
                 const area = row[8] ? row[8].toString().trim() : "";
                 
                 idCounter++;
@@ -7923,12 +7931,12 @@ La institución remitió los respectivos documentos presupuestarios en el plazo 
                     const instId = getInstId(instName, area);
 
                     const cuenta = row[2].toString().trim();
-                    const monto = parseFloat(row[3]) || 0;
-                    const var_nominal = parseFloat(row[4]) || 0;
-                    const var_pct = parseFloat(row[5]) || 0;
-                    const repres = parseFloat(row[6]) || 0;
-                    const ejec_sept = parseFloat(row[7]) || "-";
-                    const ejec_prom = parseFloat(row[8]) || "-";
+                    const monto = parseNum(row[3]);
+                    const var_nominal = parseNum(row[4]);
+                    const var_pct = parseNum(row[5]);
+                    const repres = parseNum(row[6]);
+                    const ejec_sept = row[7] ? parseNum(row[7]) : "-";
+                    const ejec_prom = row[8] ? parseNum(row[8]) : "-";
                     const alertLabel = row[9] ? row[9].toString().trim() : "";
 
                     const isRevenue = cuenta.startsWith('1.') || cuenta.startsWith('2.') || cuenta.startsWith('3.');
@@ -7964,11 +7972,11 @@ La institución remitió los respectivos documentos presupuestarios en el plazo 
                     const instId = getInstId(instName, area);
 
                     const subpartida = row[2].toString().trim();
-                    const pi2025 = parseFloat(row[3]) || 0;
-                    const pd2025 = parseFloat(row[4]) || 0;
-                    const pi2026 = parseFloat(row[5]) || 0;
-                    const var_pct = parseFloat(row[6]) || 0;
-                    const repres = parseFloat(row[7]) || 0;
+                    const pi2025 = parseNum(row[3]);
+                    const pd2025 = parseNum(row[4]);
+                    const pi2026 = parseNum(row[5]);
+                    const var_pct = parseNum(row[6]);
+                    const repres = parseNum(row[7]);
 
                     gastos_menores.push({
                         inst_id: instId,
@@ -7996,14 +8004,14 @@ La institución remitió los respectivos documentos presupuestarios en el plazo 
                     const instId = getInstId(instName);
 
                     const cuenta = row[1].toString().trim();
-                    const pd2025 = parseFloat(row[3]) || 0;
-                    const pi2025 = parseFloat(row[4]) || 0;
-                    const pi2026 = parseFloat(row[5]) || 0;
-                    const var_pct = parseFloat(row[6]) || 0;
-                    const var_nominal = parseFloat(row[7]) || 0;
-                    const repres = parseFloat(row[8]) || 0;
-                    const ejec_2025 = parseFloat(row[9]) || "-";
-                    const ejec_prom = parseFloat(row[10]) || "-";
+                    const pd2025 = parseNum(row[3]);
+                    const pi2025 = parseNum(row[4]);
+                    const pi2026 = parseNum(row[5]);
+                    const var_pct = parseNum(row[6]);
+                    const var_nominal = parseNum(row[7]);
+                    const repres = parseNum(row[8]);
+                    const ejec_2025 = row[9] ? parseNum(row[9]) : "-";
+                    const ejec_prom = row[10] ? parseNum(row[10]) : "-";
                     const alertLabel = row[11] ? row[11].toString().trim() : "";
 
                     ingresos_detalle.push({
@@ -8037,13 +8045,13 @@ La institución remitió los respectivos documentos presupuestarios en el plazo 
 
                     const partida = row[1] ? row[1].toString().trim() : "";
                     const subpartida = row[2].toString().trim();
-                    const pd2025 = parseFloat(row[4]) || 0;
-                    const pi2025 = parseFloat(row[5]) || 0;
-                    const pi2026 = parseFloat(row[6]) || 0;
-                    const var_nominal = parseFloat(row[7]) || 0;
-                    const var_pct = parseFloat(row[8]) || 0;
-                    const repres = parseFloat(row[9]) || 0;
-                    const ejec_prom = parseFloat(row[10]) || "-";
+                    const pd2025 = parseNum(row[4]);
+                    const pi2025 = parseNum(row[5]);
+                    const pi2026 = parseNum(row[6]);
+                    const var_nominal = parseNum(row[7]);
+                    const var_pct = parseNum(row[8]);
+                    const repres = parseNum(row[9]);
+                    const ejec_prom = row[10] ? parseNum(row[10]) : "-";
                     const alertLabel = row[11] ? row[11].toString().trim() : "";
 
                     gastos_detalle.push({
@@ -8063,7 +8071,7 @@ La institución remitió los respectivos documentos presupuestarios en el plazo 
             }
 
             return {
-                instituciones: instituciones,
+                instituciones: institutions,
                 alertas: alerts,
                 gastos_menores: gastos_menores,
                 ingresos_detalle: ingresos_detalle,
