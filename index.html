@@ -7581,14 +7581,10 @@ La institución remitió los respectivos documentos presupuestarios en el plazo 
             const instData = appState.activeData.instituciones.find(i => i.id == instId);
             
             const auditorName = document.getElementById('report-fiscalizador').value || instData.auditor;
-            const antecedentes = document.getElementById('report-antecedentes').value.replace(/
-/g, '<br>');
-            const notasIngresos = document.getElementById('report-notas-ingresos').value.replace(/
-/g, '<br>');
-            const notasGastos = document.getElementById('report-notas-gastos').value.replace(/
-/g, '<br>');
-            const conclusiones = document.getElementById('report-conclusiones').value.replace(/
-/g, '<br>');
+            const antecedentes = document.getElementById('report-antecedentes').value.replace(/\n/g, '<br>');
+            const notasIngresos = document.getElementById('report-notas-ingresos').value.replace(/\n/g, '<br>');
+            const notasGastos = document.getElementById('report-notas-gastos').value.replace(/\n/g, '<br>');
+            const conclusiones = document.getElementById('report-conclusiones').value.replace(/\n/g, '<br>');
 
             // Build Selected Ingresos Table HTML
             let ingTableHtml = '';
