@@ -6355,13 +6355,34 @@
             }
 
             try {
-                // Fetch all sheets in parallel using the secure /gviz/tq CSV endpoint (Official Google API with native CORS support)
-                const fetchTab = async (sheetName) => {
-                    const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`Error loading tab: ${sheetName}`);
-                    const csvText = await response.text();
-                    return { name: sheetName, text: csvText };
+                // Fetch all sheets in parallel using JSONP to bypass CORS on GitHub Pages
+                const fetchTab = (sheetName) => {
+                    return new Promise((resolve, reject) => {
+                        const callbackName = 'gviz_' + Math.random().toString(36).substring(2, 9) + Date.now();
+                        const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:${callbackName}&sheet=${encodeURIComponent(sheetName)}`;
+                        
+                        window[callbackName] = function(data) {
+                            delete window[callbackName];
+                            const scriptEl = document.getElementById(callbackName);
+                            if (scriptEl) document.body.removeChild(scriptEl);
+                            
+                            // Map JSON to 2D array
+                            const headers = data.table.cols.map(col => col ? col.label : "");
+                            const rows = data.table.rows.map(row => row.c.map(cell => cell ? cell.v : null));
+                            resolve({ name: sheetName, rows: [headers, ...rows] });
+                        };
+                        
+                        const script = document.createElement('script');
+                        script.id = callbackName;
+                        script.src = url;
+                        script.onerror = () => {
+                            delete window[callbackName];
+                            const scriptEl = document.getElementById(callbackName);
+                            if (scriptEl) document.body.removeChild(scriptEl);
+                            reject(new Error(`Error loading tab: ${sheetName}`));
+                        };
+                        document.body.appendChild(script);
+                    });
                 };
 
                 const tabs = ['Auxiliar', 'LS_Alertas', 'LS_Menores', 'Alerta Ingresos', 'Alerta Gastos'];
@@ -6370,11 +6391,11 @@
                     return null;
                 })));
 
-                // Create a virtual SheetJS workbook from the loaded CSVs
+                // Create a virtual SheetJS workbook from the loaded Arrays
                 const workbook = XLSX.utils.book_new();
                 results.forEach(res => {
                     if (res) {
-                        const worksheet = XLSX.read(res.text, { type: 'string', raw: true }).Sheets.Sheet1;
+                        const worksheet = XLSX.utils.aoa_to_sheet(res.rows);
                         XLSX.utils.book_append_sheet(workbook, worksheet, res.name);
                     }
                 });
