@@ -6324,7 +6324,7 @@
         const GOOGLE_SHEET_ID = "1t01Z4szz-pOFPHUFn9eUkhdpi5F1Uy-hhwl97TxKIQg";
 
         // Icons Init
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
 
         // On document load
         document.addEventListener('DOMContentLoaded', () => {
@@ -6361,7 +6361,15 @@
                         const callbackName = 'gviz_' + Math.random().toString(36).substring(2, 9) + Date.now();
                         const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:${callbackName}&sheet=${encodeURIComponent(sheetName)}`;
                         
+                        let timeoutId = setTimeout(() => {
+                            delete window[callbackName];
+                            const scriptEl = document.getElementById(callbackName);
+                            if (scriptEl) document.body.removeChild(scriptEl);
+                            reject(new Error(`Timeout loading tab: ${sheetName}`));
+                        }, 15000);
+
                         window[callbackName] = function(data) {
+                            clearTimeout(timeoutId);
                             delete window[callbackName];
                             const scriptEl = document.getElementById(callbackName);
                             if (scriptEl) document.body.removeChild(scriptEl);
@@ -6830,7 +6838,7 @@
                 prevStateDesc.style.color = '#34d399';
                 prevStateIcon.innerHTML = '<i data-lucide="check-circle" style="color:var(--alert-nuevo)"></i>';
             }
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
 
             // Alerts count
             const instAlerts = appState.activeData.alertas.filter(a => a.inst_id == instId);
@@ -6873,7 +6881,7 @@
                 kpiTrend.innerHTML = `<i data-lucide="minus"></i> N/A`;
                 kpiTrend.className = `kpi-trend`;
             }
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
 
             // Render Charts
             renderCharts(counts, instId, instData.nombre);
@@ -7109,7 +7117,7 @@
             pBtns.innerHTML += `<button class="page-btn" onclick="setPage('ing', ${appState.pagination.ingPage + 1})" :disabled="${appState.pagination.ingPage === totalPages}"><i data-lucide="chevron-right" style="width:14px;"></i></button>`;
             pBtns.innerHTML += `<button class="page-btn" onclick="setPage('ing', ${totalPages})" :disabled="${appState.pagination.ingPage === totalPages}"><i data-lucide="chevrons-right" style="width:14px;"></i></button>`;
             
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         // Render Cuentas de Gasto (Expenditures) Table
@@ -7221,7 +7229,7 @@
             pBtns.innerHTML += `<button class="page-btn" onclick="setPage('gas', ${appState.pagination.gasPage + 1})" :disabled="${appState.pagination.gasPage === totalPages}"><i data-lucide="chevron-right" style="width:14px;"></i></button>`;
             pBtns.innerHTML += `<button class="page-btn" onclick="setPage('gas', ${totalPages})" :disabled="${appState.pagination.gasPage === totalPages}"><i data-lucide="chevrons-right" style="width:14px;"></i></button>`;
             
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
 
             renderGastosPoliticos();
         }
@@ -7265,7 +7273,7 @@
                     </tr>
                 `;
             });
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         // Render Consolidated Alerts Table
@@ -7380,7 +7388,7 @@
                 modalTitleText.innerText = 'Detalle de Subpartida de Gasto';
                 modalTitleIcon.setAttribute('data-lucide', 'dollar-sign');
             }
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
 
             if (!record) {
                 alert("No se encontró el registro detallado");
